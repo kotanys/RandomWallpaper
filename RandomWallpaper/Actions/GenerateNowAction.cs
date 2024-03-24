@@ -20,7 +20,8 @@ public class GenerateNowAction(IWallpaperService wallpaper, IRngProvider rng, IL
         }
         if (chosen is null)
         {
-            throw new ArgumentException("Can't choose the wallpaper");
+            logger.LogError($"Can't choose a wallpaper");
+            throw new ArgumentException("Can't choose a wallpaper");
         }
         wallpaper.Set(chosen);
         logger.LogInformation($"Set wallpaper to {chosen.Path}");

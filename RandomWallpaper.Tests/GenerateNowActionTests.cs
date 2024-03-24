@@ -1,3 +1,4 @@
+using Moq;
 using RandomWallpaper.Actions;
 using RandomWallpaper.Contracts;
 using RandomWallpaper.Models;
@@ -7,9 +8,19 @@ namespace RandomWallpaper.Tests;
 
 public class GenerateNowActionTests
 {
-    private readonly MockWallpaperService mockWallpaperService = new();
-    private readonly MockLogger mockLogger = new();
+    private readonly Mock<IWallpaperService> wallpaperServiceMock;
+    private readonly Mock<ILoggerService> loggerMock;
     private readonly GenerateNowAction generateNowAction;
+
+    
+    public GenerateNowActionTests()
+    {
+        wallpaperServiceMock = new Mock<IWallpaperService>();
+        loggerMock = new Mock<ILoggerService>();
+        loggerMock.Setup(lg => lg.LogInformation(It.IsAny<string>()));
+        loggerMock.Setup(lg => lg.LogError(It.IsAny<string>()));
+        generateNowAction = new(wallpaperServiceMock.Object, new RngProvider(), loggerMock.Object);
+    }
 
     [Fact]
     public void ShouldSetCorrentWallpaper()
@@ -22,17 +33,26 @@ public class GenerateNowActionTests
         var args = new GenerateNowActionArgs(wallpapers);
 
         var results = wallpapers.Select(w => (w, 0)).ToDictionary();
-        for (int i = 0; i < 4000; i++)
+        wallpaperServiceMock
+            .Setup(wp => wp.Set(It.IsAny<WallpaperModel>()))
+            .Callback<WallpaperModel>(chosen => results[chosen]++);
+
+        const int RunTimes = 4000;
+        for (int i = 0; i < RunTimes; i++)
         {
             generateNowAction.Run(args);
-            if (mockWallpaperService.SetWallpaper is null)
-                Assert.Fail("Wallpaper wasn't chosen at all");
-            results[mockWallpaperService.SetWallpaper]++;
         }
 
+        Assert.True(results.Values.Sum() == RunTimes);
         Assert.True(results[mostLikely] > results[lessLikely]);
         Assert.True(results[lessLikely] > results[unlikely]);
         Assert.True(results[never] == 0);
+        loggerMock.Verify(
+            lg => lg.LogError(It.IsAny<string>()), Times.Never()
+        );
+        loggerMock.Verify(
+            lg => lg.LogInformation(It.IsAny<string>()), Times.AtLeast(RunTimes)
+        );
     }
 
     [Fact]
@@ -41,30 +61,8 @@ public class GenerateNowActionTests
         WallpaperModel[] noWeight = [ new WallpaperModel("nope", Style.Fit, 0) ];
         Action shouldThrow = () => generateNowAction.Run(new(noWeight));
         Assert.Throws<ArgumentException>(shouldThrow);
-    }
-    
-    public GenerateNowActionTests()
-    {
-        generateNowAction = new(mockWallpaperService, new RngProvider(), mockLogger);
-    }
-
-    private class MockWallpaperService : IWallpaperService
-    {
-        public WallpaperModel? SetWallpaper { get; private set; }
-
-        public void Set(WallpaperModel wallpaper)
-        {
-            SetWallpaper = wallpaper;
-        }
-    }
-
-    private class MockLogger : ILoggerService
-    {
-        public int CalledLogInformationTimes {get; private set;}
-        public int CalledLogErrorTimes {get; private set;}
-
-        public void LogError(string message) => CalledLogErrorTimes++;
-
-        public void LogInformation(string message) => CalledLogInformationTimes++;
+        loggerMock.Verify(
+            lg => lg.LogError(It.IsAny<string>()), Times.AtLeastOnce()
+        );
     }
 }

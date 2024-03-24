@@ -1,3 +1,4 @@
+using Moq;
 using RandomWallpaper.Contracts;
 using RandomWallpaper.Services;
 
@@ -7,25 +8,28 @@ public class RegistryAutorunServiceTests
 {
     const string Key = "Test key";
     const string AutorunSubkey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+    private const string MockAppdir = @"C:\Appdir\RandomWallpaper.exe";
 
     private readonly MockRegistryService mockRegistry = new();
     private readonly RegistryAutorunService autorunService;
     public RegistryAutorunServiceTests()
     {
-        autorunService = new RegistryAutorunService(new MockIOService(), mockRegistry, new MockLogger(), Key);
+        var mockIO = Mock.Of<IIOService>(io => io.ProcessPath == MockAppdir);
+        var mockLogger = Mock.Of<ILoggerService>();
+        autorunService = new RegistryAutorunService(mockIO, mockRegistry, mockLogger, Key);
     }
 
     [Fact]
     public void ShouldAddCorrectKey()
     {
         autorunService.Add("now .wpcfg");
-        Assert.True((string)mockRegistry.Keys[AutorunSubkey + "\\" + Key] == (Environment.ProcessPath + " now .wpcfg"));
+        Assert.True((string)mockRegistry.Keys[AutorunSubkey + "\\" + Key] == (MockAppdir + " now .wpcfg"));
     }
 
     [Fact]
     public void ShouldRemoveCorrentKey()
     {
-        mockRegistry.Keys[AutorunSubkey + "\\" + Key] = Environment.ProcessPath + " now";
+        mockRegistry.Keys[AutorunSubkey + "\\" + Key] = MockAppdir + " now";
         autorunService.Remove();
         Assert.True(mockRegistry.Keys.Count == 0);
     }
@@ -53,37 +57,5 @@ public class RegistryAutorunServiceTests
             value = Keys[subKey + "\\" + name];
             return true;
         }
-    }
-
-    private class MockIOService : IIOService
-    {
-        public string ProcessPath => Environment.ProcessPath!;
-
-        public IEnumerable<string> EnumerateFiles(string directory)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool FileExists(string file)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string GetAbsolutePath(string path)
-        {
-            throw new NotImplementedException();
-        }
-
-        public FileStream OpenFile(string name, FileMode mode)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    private class MockLogger : ILoggerService
-    {
-        public void LogError(string message) {}
-
-        public void LogInformation(string message) {}
     }
 }

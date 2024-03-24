@@ -12,4 +12,5 @@ public class IOService : IIOService
 
     public string GetAbsolutePath(string path) => Path.GetFullPath(path);
 
+    public FileStream OpenFile(string name, FileMode mode) => File.Open(name, mode);
 }

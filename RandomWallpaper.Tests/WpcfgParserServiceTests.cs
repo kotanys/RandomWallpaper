@@ -1,3 +1,4 @@
+using Moq;
 using RandomWallpaper.Contracts;
 using RandomWallpaper.Models;
 using RandomWallpaper.Services;
@@ -6,7 +7,20 @@ namespace RandomWallpaper.Tests;
 
 public class WpcfgParserServiceTests
 {
-    private WpcfgParserService parser = new(new MockParserIO());
+    private readonly WpcfgParserService parser;
+
+    public WpcfgParserServiceTests()
+    {
+        var mockIO = Mock.Of<IIOService>(
+            io => io.FileExists(It.IsAny<string>()) == true &&
+                io.EnumerateFiles(It.IsAny<string>()) == Enumerable.Empty<string>()
+        );
+        Mock.Get(mockIO)
+            .Setup(io => io.GetAbsolutePath(It.IsAny<string>()))
+            .Returns<string>(path => $"c:\\{path}");
+
+        parser = new WpcfgParserService(mockIO);
+    }
 
     [Theory]
     [InlineData("image.png Fit 10", "image.png")]
@@ -40,27 +54,5 @@ public class WpcfgParserServiceTests
         var model = parser.ParseOne("\"This is a file with spaces.png\" fit 10");
         var correct = new WallpaperModel("c:\\This is a file with spaces.png", Style.Fit, 10);
         Assert.Equal(correct, model);
-    }
-
-    private class MockParserIO : IIOService
-    {
-        public bool FileExists(string file)
-        {
-            return true;
-        }
-
-        public string GetAbsolutePath(string path)
-        {
-            return $"c:\\{path}";
-        }
-
-        public IEnumerable<string> EnumerateFiles(string dir) => [];
-
-        public FileStream OpenFile(string name, FileMode mode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string ProcessPath => "";
     }
 }

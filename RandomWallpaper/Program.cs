@@ -22,6 +22,10 @@ if (args.Length == 0)
 
 var services = new ServiceCollection();
 services.AddKeyedSingleton("reg autorun key", RegAutorunKey);
+services.AddKeyedSingleton("appdataDirectory", Environment.GetEnvironmentVariable("appdata") 
+    ?? throw new IOException("Can't get appdata directory"));
+services.AddKeyedSingleton<Action<string>>("Console.WriteLine", Console.WriteLine);
+services.AddKeyedSingleton<Action<string>>("Directory.CreateDirectory", p => Directory.CreateDirectory(p));
 services.AddSingleton<IWallpaperService, WallpaperService>();
 services.AddSingleton<IRegistryService, RegistryService>();
 services.AddSingleton<IAutorunService, RegistryAutorunService>();
@@ -29,6 +33,7 @@ services.AddSingleton<IIOService, IOService>();
 services.AddSingleton<IRngProvider, RngProvider>();
 services.AddSingleton<IWpcfgParserService, WpcfgParserService>();
 services.AddSingleton<IWpcfgFinderService, WpcfgFinderService>();
+services.AddSingleton<IAppdataWorker, AppdataWorker>();
 SetupLogging();
 switch (args[0].ToLower())
 {
@@ -97,24 +102,11 @@ string GetWpcfgPath()
         return Path.Combine(dir, args[1]);
     }
 
-    var finder = provider.GetService<IWpcfgFinderService>();
-    if (finder is not null)
-    {
-        try
-        {
-            var found = finder.Find();
-            if (!found.Contains(':'))
-                return Path.Combine(dir, found);
-            else return found;
-        }
-        catch {}
-    }
-
-    throw new ArgumentException("Can't get .wpcfg file");
+    var finder = provider.GetRequiredService<IWpcfgFinderService>();
+    return finder.Find();
 }
 
 void SetupLogging()
 {
-    var path = Path.Combine(Environment.ProcessPath!, "log.txt");
-    services.AddSingleton<ILoggerService>(new LoggerService(new StreamWriter(path, true)));
+    services.AddSingleton<ILoggerService, LoggerService>();
 }

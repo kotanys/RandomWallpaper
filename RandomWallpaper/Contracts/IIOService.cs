@@ -6,4 +6,5 @@ public interface IIOService
     IEnumerable<string> EnumerateFiles(string directory);
     bool FileExists(string file);
     string GetAbsolutePath(string path);
+    FileStream OpenFile(string name, FileMode mode);
 }
