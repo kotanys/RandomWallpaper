@@ -55,6 +55,12 @@ public class WpcfgParserServiceTests
         }
 
         public IEnumerable<string> EnumerateFiles(string dir) => [];
+
+        public FileStream OpenFile(string name, FileMode mode)
+        {
+            throw new NotImplementedException();
+        }
+
         public string ProcessPath => "";
     }
 }

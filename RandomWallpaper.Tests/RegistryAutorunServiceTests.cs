@@ -50,7 +50,8 @@ public class RegistryAutorunServiceTests
 
         public bool TryGetValue(string subKey, string name, out object? value)
         {
-            throw new NotImplementedException();
+            value = Keys[subKey + "\\" + name];
+            return true;
         }
     }
 
@@ -69,6 +70,11 @@ public class RegistryAutorunServiceTests
         }
 
         public string GetAbsolutePath(string path)
+        {
+            throw new NotImplementedException();
+        }
+
+        public FileStream OpenFile(string name, FileMode mode)
         {
             throw new NotImplementedException();
         }

@@ -8,6 +8,7 @@ namespace RandomWallpaper.Tests;
 public class GenerateNowActionTests
 {
     private readonly MockWallpaperService mockWallpaperService = new();
+    private readonly MockLogger mockLogger = new();
     private readonly GenerateNowAction generateNowAction;
 
     [Fact]
@@ -44,7 +45,7 @@ public class GenerateNowActionTests
     
     public GenerateNowActionTests()
     {
-        generateNowAction = new(mockWallpaperService, new RngProvider());
+        generateNowAction = new(mockWallpaperService, new RngProvider(), mockLogger);
     }
 
     private class MockWallpaperService : IWallpaperService
@@ -55,5 +56,15 @@ public class GenerateNowActionTests
         {
             SetWallpaper = wallpaper;
         }
+    }
+
+    private class MockLogger : ILoggerService
+    {
+        public int CalledLogInformationTimes {get; private set;}
+        public int CalledLogErrorTimes {get; private set;}
+
+        public void LogError(string message) => CalledLogErrorTimes++;
+
+        public void LogInformation(string message) => CalledLogInformationTimes++;
     }
 }
