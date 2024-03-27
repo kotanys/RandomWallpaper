@@ -40,22 +40,29 @@ public class RegistryAutorunServiceTests
 
         public void DeleteValue(string subKey, string name, bool strict)
         {
-            if (strict && !Keys.ContainsKey(subKey + "\\" + name))
+            if (strict && !Keys.ContainsKey(GetDictionaryKey(subKey, name)))
             {
                 throw new InvalidOperationException("Tried to delete a key that doesn't exist");
             }
-            Keys.Remove(subKey + "\\" + name);
+            Keys.Remove(GetDictionaryKey(subKey, name));
+        }
+
+        public object GetValue(string subKey, string name)
+        {
+            return Keys[GetDictionaryKey(subKey, name)];
         }
 
         public void SetValue(string subKey, string name, object value)
         {
-            Keys[subKey + "\\" + name] = value;
+            Keys[GetDictionaryKey(subKey, name)] = value;
         }
 
         public bool TryGetValue(string subKey, string name, out object? value)
         {
-            value = Keys[subKey + "\\" + name];
+            value = Keys[GetDictionaryKey(subKey, name)];
             return true;
         }
+
+        private string GetDictionaryKey(string subKey, string name) => subKey + "\\" + name;
     }
 }
