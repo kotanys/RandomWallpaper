@@ -5,7 +5,7 @@ using RandomWallpaper.Models;
 
 namespace RandomWallpaper.Services;
 
-public class WallpaperService : IWallpaperService
+public class WallpaperService(IRegistryService registryService) : IWallpaperService
 {
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -30,10 +30,9 @@ public class WallpaperService : IWallpaperService
         }
     }
 
-    private static void SetStyle(Style style)
+    private void SetStyle(Style style)
     {
-        using RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true)!;
-        key.SetValue("WallpaperStyle", style.WallpaperStyle);
-        key.SetValue("TileWallpaper", style.TileWallpaper);
+        registryService.SetValue(@"Control Panel\Desktop", "WallpaperStyle", style.WallpaperStyle);
+        registryService.SetValue(@"Control Panel\Desktop", "TileWallpaper", style.TileWallpaper);
     }
 }
