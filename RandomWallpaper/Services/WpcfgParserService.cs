@@ -8,11 +8,10 @@ public class WpcfgParserService(IIOService io) : IWpcfgParserService
 {
     private const char Separator = ' ';
 
-    public ICollection<WallpaperModel> ParseFile(string wpcfg)
+    public ICollection<WallpaperModel> Parse(string wpcfg, string wpcfgPath)
     {
-        string dir = new(wpcfg.Reverse().SkipWhile(p => p != '\\').Reverse().ToArray());
-        return File.ReadAllLines(wpcfg)
-                    .Where(l => !string.IsNullOrWhiteSpace(l))
+        var dir = new string(wpcfgPath.Reverse().SkipWhile(p => p != '\\').Reverse().ToArray());
+        return wpcfg.Split('\n').Where(l => !string.IsNullOrWhiteSpace(l))
                     .Select(l => {
                         if (l.Contains(':'))
                             return ParseOne(l);

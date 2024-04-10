@@ -67,4 +67,32 @@ public class WpcfgFinderServiceTests
         ioMock.Verify();
         loggerMock.Verify(lg => lg.LogError(It.IsAny<string>()), Times.AtLeastOnce());
     }
+
+    [Fact]
+    public void ShouldNotReturnQuotesIfPathHasSpaces_Registry()
+    {
+        const string expectedWpcfg = @"c:\yay you found me.wpcfg";
+        object? registryValue = @"c:\Appdir\app.exe now " + expectedWpcfg;
+        registryMock.Setup(r => r.TryGetValue(AutorunRegPath, RegAutorunKey, out registryValue)).Returns(true);
+
+        string actual = finder.Find();
+
+        registryMock.Verify();
+        Assert.Equal(expectedWpcfg, actual);
+    }
+
+    [Fact]
+    public void ShouldNotReturnQuotesIfPathHasSpaces_Appdir()
+    {
+        object? nil = null;
+        const string expectedWpcfg = @"c:\Appdir\found space .wpcfg";
+        ioMock.Setup(io => io.EnumerateFiles(@"c:\Appdir\")).Returns<string>(_ => ["found space .wpcfg"]);
+        registryMock.Setup(r => r.TryGetValue(AutorunRegPath, RegAutorunKey, out nil));
+
+        string actual = finder.Find();
+
+        registryMock.Verify();
+        ioMock.Verify();
+        Assert.Equal(expectedWpcfg, actual);
+    }
 }

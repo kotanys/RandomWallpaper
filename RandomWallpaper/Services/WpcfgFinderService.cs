@@ -33,6 +33,11 @@ public class WpcfgFinderService(IIOService io, IRegistryService registry, ILogge
     private static string ExtractWpcfgPath(string registryValue)
     {
         var split = registryValue.Split(' ').SkipWhile(s => s != "now").Skip(1);
-        return string.Join(' ', split);
+        var path = string.Join(' ', split);
+        if (path[0] == '"' && path[^1] == '"')
+        {
+            path = new string(path.Skip(1).SkipLast(1).ToArray());
+        }
+        return path;
     }
 }

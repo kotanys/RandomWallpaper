@@ -80,8 +80,9 @@ void RunAction(IServiceProvider services)
     }
     else if (action is GenerateNowAction generateNowAction)
     {
-        string wpcfg = GetWpcfgPath();
-        var wallpapers = services.GetRequiredService<IWpcfgParserService>().ParseFile(wpcfg);
+        string wpcfgPath = GetWpcfgPath();
+        string wpcfgContents = File.ReadAllText(wpcfgPath);
+        var wallpapers = services.GetRequiredService<IWpcfgParserService>().Parse(wpcfgContents, wpcfgPath);
         generateNowAction.Run(new(wallpapers));
     }
 }
