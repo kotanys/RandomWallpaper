@@ -60,6 +60,10 @@ catch (Exception e)
 {
     var logger = provider.GetService<ILoggerService>();
     logger?.LogError($"Fatal error: {e.Message}");
+    
+    var appdata = provider.GetService<IAppdataWorker>();
+    var fileDate = $"{DateTime.Now.Day}{DateTime.Now.Hour}{DateTime.Now.Minute}{DateTime.Now.Second}";
+    appdata?.WriteTextFile($"Crash_{fileDate}.txt", e.ToString());
 }
 
 void RunAction(IServiceProvider services)
